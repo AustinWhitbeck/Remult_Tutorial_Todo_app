@@ -1,6 +1,6 @@
 // src/shared/Task.ts
 
-import { Entity, Fields } from 'remult'
+import { Allow, Entity, Fields } from 'remult'
 
 /* NOTES: 
 
@@ -34,7 +34,13 @@ You can create a custom validation handling function
 
 */
 @Entity('tasks', {
-	allowApiCrud: true,
+	// NOTE: without authentication value
+	// allowApiCrud: true,
+
+	// NOTE: Requiring authentication
+	allowApiCrud: Allow.authenticated,
+	allowApiInsert: 'admin',
+	allowApiDelete: 'admin',
 })
 export class Task {
 	@Fields.autoIncrement()
@@ -48,6 +54,7 @@ export class Task {
 		validate: (task) => {
 			if (task.title.length < 3) throw 'Too Short'
 		},
+		allowApiUpdate: 'admin',
 	})
 	title = ''
 

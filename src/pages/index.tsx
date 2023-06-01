@@ -1,8 +1,11 @@
 // src/pages/index.tsx
 
 import { FormEvent, useEffect, useState } from "react"
-import { remult } from "remult"
+import { remult, UserInfo  } from "remult"
 import { Task } from "../shared/Task"
+import { TasksController } from "@/shared/TasksController";
+import { signIn, signOut, useSession } from "next-auth/react"
+
 
 /* NOTES *
 
@@ -20,9 +23,10 @@ taskRepo is a Remult Repository object used to fetch and create Task entity obje
 const taskRepo = remult.repo(Task)
 
 export default function Home() {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const session = useSession()
 
-   const [newTaskTitle, setNewTaskTitle] = useState("")
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [newTaskTitle, setNewTaskTitle] = useState("")
 
   const addTask = async (e: FormEvent) => {
     e.preventDefault()
@@ -44,11 +48,10 @@ export default function Home() {
     }
   }
 
+
   const setAllCompleted = async (completed: boolean) => {
-  for (const task of await taskRepo.find()) {
-    await taskRepo.save({ ...task, completed })
+    await TasksController.setAllCompleted(completed);
   }
-}
 
   //** / NOTES  **\\
   /*
@@ -63,6 +66,9 @@ export default function Home() {
       3. changes - a detailed list of changes that were received
   */
   useEffect(() => {
+    remult.user = session.data?.user as UserInfo
+  if (session.status === "unauthenticated") signIn()
+  else if (session.status === "authenticated")
     taskRepo.liveQuery({
       limit: 20,
       orderBy: { completed: "asc"},
@@ -70,12 +76,18 @@ export default function Home() {
       // where: { completed: false},
       // where: { title: 'Clean car'},
     }).subscribe( info => setTasks(info.applyChanges))
-  }, [])
+  }, [session])
+
+  if (session.status !== "authenticated") return <h1>Not Authenticated</h1>
 
   return (
     <div>
       <h1>Todos</h1>
       <main>
+        <div>
+          Hello {remult.user?.name}
+          <button onClick={() => signOut()}>Sign Out</button>
+        </div>
         <div>
           <button onClick={() => setAllCompleted(true)}>Set All Completed</button>
           <button onClick={() => setAllCompleted(false)}>Set All Uncompleted</button>

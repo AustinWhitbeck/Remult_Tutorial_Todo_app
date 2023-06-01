@@ -1,5 +1,8 @@
-import { Task } from "@/shared/Task";
-import { remultNext } from "remult/remult-next";
+import { Task } from '@/shared/Task'
+import { TasksController } from '@/shared/TasksController'
+import { remultNext } from 'remult/remult-next'
+import { findUserById } from './auth/[...nextauth]'
+import { getToken } from 'next-auth/jwt'
 
 /* NOTES
 
@@ -13,5 +16,8 @@ import { remultNext } from "remult/remult-next";
 
 */
 export default remultNext({
-  entities: [Task],
-});
+	entities: [Task],
+	controllers: [TasksController],
+	// This is the remult key, using NextAuth methods
+	getUser: async (req) => findUserById((await getToken({ req }))?.sub),
+})
